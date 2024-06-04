@@ -1,12 +1,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useDebounce } from '../util/debounce'
 
 const comments = ref([])
 const currentPage = ref(1)
-const itemsPerPage = 10
+const itemsPerPage = ref(10)
 const searchQuery = ref('')
 const sortKey = ref('id')
 const sortOrder = ref('asc')
+const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
 const fetchComments = async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/comments')
@@ -24,20 +26,20 @@ const sortedComments = computed(() => {
 
 const filteredComments = computed(() => {
   return sortedComments.value.filter(comment =>
-    comment.name.includes(searchQuery.value) ||
-    comment.email.includes(searchQuery.value) ||
-    comment.body.includes(searchQuery.value)
+    comment.name.includes(debouncedSearchQuery.value) ||
+    comment.email.includes(debouncedSearchQuery.value) ||
+    comment.body.includes(debouncedSearchQuery.value)
   )
 })
 
 const paginatedComments = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
   return filteredComments.value.slice(start, end)
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredComments.value.length / itemsPerPage)
+  return Math.ceil(filteredComments.value.length / itemsPerPage.value)
 })
 
 const prevPage = () => {
@@ -67,10 +69,20 @@ const sortTable = (key) => {
     <h1>Data Area</h1>
 
     <div class="input-area">
-      <input type="text" class="search-bar" placeholder="Search..." v-model="searchQuery">
+      <input type="text" class="input-field" placeholder="Search..." v-model="searchQuery">
+
+      <label for="rowsPerPage">Rows per page:</label>
+    <select v-model="itemsPerPage" id="rowsPerPage" class="input-field">
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option :value="comments.length">All</option>
+    </select>
+
     </div>
 
-    <div class="table-area">
+    <div v-if="paginatedComments.length<=0">Loading...</div>
+    <div  v-else class="table-area">
       <table class="data-table">
         <thead>
           <tr>
@@ -110,9 +122,12 @@ const sortTable = (key) => {
 
 .input-area {
   margin-top: 2rem;
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
 }
 
-.search-bar {
+.input-field {
   padding: 8px;
   border-radius: 4px;
 }
