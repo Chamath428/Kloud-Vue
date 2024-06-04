@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useDebounce } from '../util/debounce'
 
 const comments = ref([])
 const currentPage = ref(1)
@@ -7,6 +8,7 @@ const itemsPerPage = 10
 const searchQuery = ref('')
 const sortKey = ref('id')
 const sortOrder = ref('asc')
+const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
 const fetchComments = async () => {
   const response = await fetch('https://jsonplaceholder.typicode.com/comments')
@@ -24,9 +26,9 @@ const sortedComments = computed(() => {
 
 const filteredComments = computed(() => {
   return sortedComments.value.filter(comment =>
-    comment.name.includes(searchQuery.value) ||
-    comment.email.includes(searchQuery.value) ||
-    comment.body.includes(searchQuery.value)
+    comment.name.includes(debouncedSearchQuery.value) ||
+    comment.email.includes(debouncedSearchQuery.value) ||
+    comment.body.includes(debouncedSearchQuery.value)
   )
 })
 
