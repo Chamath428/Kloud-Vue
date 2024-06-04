@@ -70,7 +70,8 @@ const sortTable = (key) => {
       <input type="text" class="search-bar" placeholder="Search..." v-model="searchQuery">
     </div>
 
-    <div class="table-area">
+    <div v-if="paginatedComments.length<=0">Loading...</div>
+    <div  v-else class="table-area">
       <table class="data-table">
         <thead>
           <tr>
