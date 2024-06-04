@@ -4,7 +4,7 @@ import { useDebounce } from '../util/debounce'
 
 const comments = ref([])
 const currentPage = ref(1)
-const itemsPerPage = 10
+const itemsPerPage = ref(10)
 const searchQuery = ref('')
 const sortKey = ref('id')
 const sortOrder = ref('asc')
@@ -33,13 +33,13 @@ const filteredComments = computed(() => {
 })
 
 const paginatedComments = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage
-  const end = start + itemsPerPage
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
   return filteredComments.value.slice(start, end)
 })
 
 const totalPages = computed(() => {
-  return Math.ceil(filteredComments.value.length / itemsPerPage)
+  return Math.ceil(filteredComments.value.length / itemsPerPage.value)
 })
 
 const prevPage = () => {
@@ -69,7 +69,16 @@ const sortTable = (key) => {
     <h1>Data Area</h1>
 
     <div class="input-area">
-      <input type="text" class="search-bar" placeholder="Search..." v-model="searchQuery">
+      <input type="text" class="input-field" placeholder="Search..." v-model="searchQuery">
+
+      <label for="rowsPerPage">Rows per page:</label>
+    <select v-model="itemsPerPage" id="rowsPerPage" class="input-field">
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option :value="comments.length">All</option>
+    </select>
+
     </div>
 
     <div v-if="paginatedComments.length<=0">Loading...</div>
@@ -113,9 +122,12 @@ const sortTable = (key) => {
 
 .input-area {
   margin-top: 2rem;
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
 }
 
-.search-bar {
+.input-field {
   padding: 8px;
   border-radius: 4px;
 }
