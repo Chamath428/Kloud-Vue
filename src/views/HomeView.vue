@@ -1,67 +1,83 @@
-<script setup>
+<script>
 import { ref, computed, onMounted } from 'vue'
 import { useDebounce } from '../util/debounce'
 
-const comments = ref([])
-const currentPage = ref(1)
-const itemsPerPage = ref(10)
-const searchQuery = ref('')
-const sortKey = ref('id')
-const sortOrder = ref('asc')
-const debouncedSearchQuery = useDebounce(searchQuery, 300)
+export default {
+  setup() {
 
-const fetchComments = async () => {
-  const response = await fetch('https://jsonplaceholder.typicode.com/comments')
-  comments.value = await response.json()
-}
+    const comments = ref([])
+    const currentPage = ref(1)
+    const itemsPerPage = ref(10)
+    const searchQuery = ref('')
+    const sortKey = ref('id')
+    const sortOrder = ref('asc')
+    const debouncedSearchQuery = useDebounce(searchQuery, 300)
 
-onMounted(fetchComments)
+    const fetchComments = async () => {
+      const response = await fetch('https://jsonplaceholder.typicode.com/comments')
+      comments.value = await response.json()
+    }
 
-const sortedComments = computed(() => {
-  return [...comments.value].sort((a, b) => {
-    const result = a[sortKey.value] > b[sortKey.value] ? 1 : -1
-    return sortOrder.value === 'asc' ? result : -result
-  })
-})
+    onMounted(fetchComments)
 
-const filteredComments = computed(() => {
-  return sortedComments.value.filter(comment =>
-    comment.name.includes(debouncedSearchQuery.value) ||
-    comment.email.includes(debouncedSearchQuery.value) ||
-    comment.body.includes(debouncedSearchQuery.value)
-  )
-})
+    const sortedComments = computed(() => {
+      return [...comments.value].sort((a, b) => {
+        const result = a[sortKey.value] > b[sortKey.value] ? 1 : -1
+        return sortOrder.value === 'asc' ? result : -result
+      })
+    })
 
-const paginatedComments = computed(() => {
-  const start = (currentPage.value - 1) * itemsPerPage.value
-  const end = start + itemsPerPage.value
-  return filteredComments.value.slice(start, end)
-})
+    const filteredComments = computed(() => {
+      return sortedComments.value.filter(comment =>
+        comment.name.includes(debouncedSearchQuery.value) ||
+        comment.email.includes(debouncedSearchQuery.value) ||
+        comment.body.includes(debouncedSearchQuery.value)
+      )
+    })
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredComments.value.length / itemsPerPage.value)
-})
+    const paginatedComments = computed(() => {
+      const start = (currentPage.value - 1) * itemsPerPage.value
+      const end = start + itemsPerPage.value
+      return filteredComments.value.slice(start, end)
+    })
 
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
+    const totalPages = computed(() => {
+      return Math.ceil(filteredComments.value.length / itemsPerPage.value)
+    })
+
+    const prevPage = () => {
+      if (currentPage.value > 1) {
+        currentPage.value--
+      }
+    }
+
+    const nextPage = () => {
+      if (currentPage.value < totalPages.value) {
+        currentPage.value++
+      }
+    }
+
+    const sortTable = (key) => {
+      if (sortKey.value === key) {
+        sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+      } else {
+        sortKey.value = key
+        sortOrder.value = 'asc'
+      }
+    }
+
+    return {
+      paginatedComments, totalPages, prevPage, nextPage, sortTable,comments,
+      currentPage,
+      itemsPerPage,
+      searchQuery,
+      sortKey,
+      sortOrder
+    };
   }
+
 }
 
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
-
-const sortTable = (key) => {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    sortKey.value = key
-    sortOrder.value = 'asc'
-  }
-}
 </script>
 
 <template>
@@ -72,24 +88,26 @@ const sortTable = (key) => {
       <input type="text" class="input-field" placeholder="Search..." v-model="searchQuery">
 
       <label for="rowsPerPage">Rows per page:</label>
-    <select v-model="itemsPerPage" id="rowsPerPage" class="input-field">
-      <option value="10">10</option>
-      <option value="15">15</option>
-      <option value="20">20</option>
-      <option :value="comments.length">All</option>
-    </select>
+      <select v-model="itemsPerPage" id="rowsPerPage" class="input-field">
+        <option value="10">10</option>
+        <option value="15">15</option>
+        <option value="20">20</option>
+        <option :value="comments.length">All</option>
+      </select>
 
     </div>
 
-    <div v-if="paginatedComments.length<=0">Loading...</div>
-    <div  v-else class="table-area">
+    <div v-if="paginatedComments?.length <= 0">Loading...</div>
+    <div v-else class="table-area">
       <table class="data-table">
         <thead>
           <tr>
             <th style="width: 5%;">Post Id</th>
-            <th style="width: 15%;">ID <span style="margin-left: 15px;"><button @click="sortTable('id')" >Sort</button></span></th>
+            <th style="width: 15%;">ID <span style="margin-left: 15px;"><button
+                  @click="sortTable('id')">Sort</button></span></th>
             <th style="width: 20%;">Name</th>
-            <th style="width: 20%;">Email <span style="margin-left: 15px;"><button @click="sortTable('email')" >Sort</button></span></th>
+            <th style="width: 20%;">Email <span style="margin-left: 15px;"><button
+                  @click="sortTable('email')">Sort</button></span></th>
             <th style="width: 40%;">Body</th>
           </tr>
         </thead>
@@ -156,7 +174,7 @@ td {
   text-align: center
 }
 
-.pagination-area{
+.pagination-area {
   float: right;
 }
 </style>
